@@ -13,7 +13,9 @@ module Regular.Predicates.Applies.Fixpoint (μσ : Sum) where
     public
 
   data AppAlμ where
-    AppPeel : (d i : Zipper μσ){x y : ⟦ μσ ⟧S (Fix μσ)}
+    -- Here, d and d' must be compatible zippers!
+    -- that is: point to the SAME HOLE
+    AppPeel : (d d' i : Zipper μσ){x y : ⟦ μσ ⟧S (Fix μσ)}
             → (p : Patch Alμ μσ)
             → AppS x  y  p
-            → AppAlμ (Zipper-inj d ⟨ x ⟩) (Zipper-inj i ⟨ y ⟩) (peel d i p)
+            → AppAlμ (Zipper-inj d ⟨ x ⟩) (Zipper-inj i ⟨ y ⟩) (peel d' i p)

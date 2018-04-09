@@ -262,3 +262,19 @@ Zipper-match-inj-lemma {σ} (peel C idx as rest) x
   rewrite match-inj-lemma {σ} C (AllBut-fill idx (Zipper-inj rest x) as)
         | AllBut-witness-fill-lemma idx (Zipper-inj rest x) as
         = Zipper-match-inj-lemma rest x
+
+Zipper-match-inj-inv : {σ : Sum}(z : Zipper σ)(x x' : Fix σ)
+                     → Zipper-match z x ≡ just x'
+                     → ∃ (λ z' → x ≡ Zipper-inj z' x')
+Zipper-match-inj-inv here x .x refl = here , refl
+Zipper-match-inj-inv (peel C prf x₁ z) ⟨ x ⟩ x' hip 
+  with sop x
+...| tag Cx Px with C ≟F Cx
+...| no abs = Maybe-⊥-elim hip
+...| yes refl with Zipper-match-inj-inv z (∈-witness prf Px) x' hip
+...| z' , ind with AllBut-fill-drop-lemma {x = I} prf Px
+...| res = peel C prf (All-drop-∈ prf Px) z' 
+         , cong (⟨_⟩ ∘ inj Cx) 
+                (sym (trans (cong (λ P → AllBut-fill prf P (All-drop-∈ prf Px)) 
+                                  (sym ind)) 
+                            (sym res)))

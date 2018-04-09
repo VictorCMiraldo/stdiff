@@ -257,6 +257,18 @@ AllBut-witness-fill-lemma .(here refl) el (here _)
 AllBut-witness-fill-lemma .(there _) el (there hip xs) 
   = AllBut-witness-fill-lemma _ el xs
 
+All-drop-∈ : ∀{A}{x : A}{l : List A}{P : A → Set}(prf : x ∈ l)(xs : All P l)
+           → AllBut P prf
+All-drop-∈ (here refl) (_ ∷ xs) = here xs
+All-drop-∈ (there prf) (x ∷ xs) = there x (All-drop-∈ prf xs)
+
+
+AllBut-fill-drop-lemma
+  : ∀{A l x}{P : A → Set}(prf : x ∈ l)(xs : All P l)
+  → xs ≡ AllBut-fill prf (∈-witness prf xs) (All-drop-∈ prf xs)
+AllBut-fill-drop-lemma (here refl) (x ∷ xs) = refl
+AllBut-fill-drop-lemma (there prf) (x ∷ xs) = cong (x ∷_) (AllBut-fill-drop-lemma prf xs)
+
 open import Data.String
   using (String ; primStringEquality)
   renaming (_++_ to strcat)
