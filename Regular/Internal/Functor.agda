@@ -96,19 +96,21 @@ module Regular.Internal.Functor
 
 -- *** Alignment application
 
+
+  Prod-cat : ∀{π₀ π₁} → ⟦ π₀ ⟧P Rec → ⟦ π₁ ⟧P Rec → ⟦ π₀ ++ π₁ ⟧P Rec
+  Prod-cat {[]}      []       qs = qs
+  Prod-cat {α₀ ∷ π₀} (p ∷ ps) qs = p ∷ Prod-cat ps qs
+
   applyAl : ∀{π₁ π₂ At} → 
            (applyAt : ∀ {α} → At α → ⟦ α ⟧A Rec → Maybe (⟦ α ⟧A Rec)) →
            Al At π₁ π₂ → ⟦ π₁ ⟧P Rec → Maybe (⟦ π₂ ⟧P Rec)
   applyAl at (A0 d i)      p = just i -- should we check that 'd ≡ p' ?
-  applyAl at (AX d i r rs) p = ins i <$> (del d p >>= All-head-map (at r) (applyAl at rs))
+  applyAl at (AX d i r rs) p = Prod-cat i 
+                           <$> (del d p >>= All-head-map (at r) (applyAl at rs))
     where
       del : ∀{π₀ π₁} → ⟦ π₀ ⟧P Rec → ⟦ π₀ ++ π₁ ⟧P Rec → Maybe (⟦ π₁ ⟧P Rec)
       del {[]}           p       ps  = just ps
       del {α₀ ∷ π₀} (_ ∷ p) (_ ∷ ps) = del p ps
-
-      ins : ∀{π₀ π₁} → ⟦ π₀ ⟧P Rec → ⟦ π₁ ⟧P Rec → ⟦ π₀ ++ π₁ ⟧P Rec
-      ins {[]}      []       qs = qs
-      ins {α₀ ∷ π₀} (p ∷ ps) qs = p ∷ ins ps qs
 
   costAl : ∀{π₁ π₂ At} 
           → (costAt : ∀ {α} → At α → ℕ) 

@@ -39,27 +39,19 @@ module Regular.Predicates.Applies.Functor
              → Al (At PatchRec) π₁ π₂
              → Set
       where
-    AppA0 : AppAl [] [] A0
+    AppA0 : ∀{π₁ π₂}(d : ⟦ π₁ ⟧P Rec)(i : ⟦ π₂ ⟧P Rec)
+          → AppAl d i (A0 d i)
 
-    AppAX : ∀{α π₁ π₂}(x y : ⟦ α ⟧A Rec)
-          → (xs : ⟦ π₁ ⟧P Rec)(ys : ⟦ π₂ ⟧P Rec)
-          → (px  : At PatchRec α)
-          → (pxs : Al (At PatchRec) π₁ π₂)
-          → AppAt x y px
-          → AppAl xs ys pxs
-          → AppAl (x ∷ xs) (y ∷ ys) (AX px pxs)
-
-    AppAins : ∀{α π₁ π₂}(y : ⟦ α ⟧A Rec)
-            → (xs : ⟦ π₁ ⟧P Rec)(ys : ⟦ π₂ ⟧P Rec)
-            → (al : Al (At PatchRec) π₁ π₂)
-            → AppAl xs ys al
-            → AppAl xs (y ∷ ys) (Ains {α = α} y al)
-
-    AppAdel : ∀{α π₁ π₂}(x x' : ⟦ α ⟧A Rec)
-            → (xs : ⟦ π₁ ⟧P Rec)(ys : ⟦ π₂ ⟧P Rec)
-            → (al : Al (At PatchRec) π₁ π₂)
-            → AppAl xs ys al
-            → AppAl (x ∷ xs) ys (Adel {α = α} x' al)
+    AppAX : ∀{α π₁ π₁' π₂ π₂'}(d : ⟦ π₁ ⟧P Rec)(i : ⟦ π₂ ⟧P Rec)
+          → (r  : At PatchRec α)
+          → (rs : Al (At PatchRec) π₁' π₂')
+          → {x x' : ⟦ α ⟧A Rec}
+          → {xs   : ⟦ π₁' ⟧P Rec}
+          → {xs'  : ⟦ π₂' ⟧P Rec}
+          → AppAt x  x'  r
+          → AppAl xs xs' rs
+          → AppAl (Prod-cat d (x ∷ xs)) (Prod-cat i (x' ∷ xs')) 
+                  (AX d i r rs) 
 
   data AppS : {σ : Sum} 
             → ⟦ σ ⟧S Rec → ⟦ σ ⟧S Rec 

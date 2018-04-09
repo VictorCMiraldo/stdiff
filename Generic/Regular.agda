@@ -4,6 +4,10 @@ open import Prelude
 open import Generic.Opaque
   public
 
+-- * We need monadic functionality for Maybe
+open import Data.Maybe using (monadPlus)
+open RawMonadPlus {lz} monadPlus
+
 data Atom : Set where
   K : (κ : Konst) → Atom 
   I :               Atom
@@ -215,3 +219,23 @@ cata-uni : ∀{σ A}(f : ⟦ σ ⟧S A → A)(h : Fix σ → A)
 cata-uni f h hip ⟨ x ⟩ 
   rewrite hip ⟨ x ⟩ 
         = cong (λ P → f (fmapS P x)) (fun-ext (cata-uni f h hip))
+
+
+data Zipper (σ : Sum) : Set where
+  here : Zipper σ
+  peel : (C : Constr σ)
+       → (prf : I ∈ typeOf σ C)
+       → AllBut (λ x → ⟦ x ⟧A (Fix σ)) prf
+       → Zipper σ
+       → Zipper σ
+
+Zipper-match : {σ : Sum} → Zipper σ → Fix σ → Maybe (Fix σ)
+Zipper-match here x 
+  = just x
+Zipper-match (peel C idx _ rest) ⟨ x ⟩ 
+  = match C x >>= Zipper-match rest ∘ ∈-witness idx
+
+Zipper-inj : {σ : Sum} → Zipper σ → Fix σ → Fix σ
+Zipper-inj here x = x
+Zipper-inj (peel C idx as rest) x
+  = ⟨ inj C (AllBut-fill idx (Zipper-inj rest x) as) ⟩

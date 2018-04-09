@@ -170,10 +170,15 @@ Any-there-inj
   → px ≡ py
 Any-there-inj refl = refl
 
--- List disjointness
+-- * List Membership
 
 _∈_ : ∀{a}{A : Set a} → A → List A → Set a
 x ∈ l = Any (_≡_ x) l
+
+∈-witness : ∀{a b}{A : Set a}{P : A → Set b}{l : List A}{x : A}
+          → x ∈ l → All P l → P x
+∈-witness (here refl) (p ∷ ps) = p
+∈-witness (there prf) (p ∷ ps) = ∈-witness prf ps
 
 _∉_ : ∀{a}{A : Set a} → A → List A → Set a
 x ∉ l = ¬ (x ∈ l)
@@ -190,6 +195,8 @@ x ∉ l = ¬ (x ∈ l)
 ∉-tail : ∀{a}{A : Set a}{x y : A}{l : List A}
        → x ∉ (y ∷ l) → x ∉ l
 ∉-tail hip abs = hip (there abs)
+
+-- List disjointness
 
 data Disj {a}{A : Set a} : List A → List A → Set a where
   nil  : ∀{l}       → Disj l []
@@ -229,6 +236,18 @@ disj-dec _≟A_ l₁ (x ∷ l₂) with ∈-dec _≟A_ x l₁
 ...| no  x∉l₁ with disj-dec _≟A_ l₁ l₂
 ...| no  ¬disj = no (λ { (cons _ abs) → ¬disj abs })  
 ...| yes  disj = yes (cons x∉l₁ disj)
+
+-- A value of (AllBut P prf), for (prf : x ∈ l) is
+-- isomorphic to All P (delete prf l)
+--
+data AllBut {A : Set}(P : A → Set) : {l : List A}{x : A} → x ∈ l → Set where
+    here  : ∀{x xs}      → All P xs → AllBut P {x ∷ xs} (here refl)
+    there : ∀{x x' xs p} → (hip : P x) → AllBut P {xs} {x'} p 
+          → AllBut P {x ∷ xs} (there p)
+
+AllBut-fill : ∀{A l x}{P : A → Set} → (prf : x ∈ l) → P x → AllBut P prf → All P l
+AllBut-fill .(here refl) hip (here rest) = hip ∷ rest
+AllBut-fill .(there _) hip (there px ab) = px ∷ AllBut-fill _ hip ab
 
 open import Data.String
   using (String ; primStringEquality)
