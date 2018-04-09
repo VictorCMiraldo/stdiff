@@ -153,6 +153,12 @@ All-∷-inj
   → _≡_ {A = All P (x ∷ xs)} (px ∷ pxs) (py ∷ pys) → px ≡ py × pxs ≡ pys
 All-∷-inj refl = refl , refl
 
+All-fgt 
+  : ∀{a}{A : Set a}{xs : List A} 
+  → All (const A) xs → List A
+All-fgt []       = []
+All-fgt (x ∷ xs) = x ∷ All-fgt xs
+
 open import Data.List.Any
   hiding (map)
   public
