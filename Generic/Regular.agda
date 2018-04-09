@@ -186,10 +186,22 @@ match C x with sop x
 ... | yes refl = just p
 ... | no  _    = nothing 
 
+match-inj-lemma : {σ : Sum}{X : Set}(C : Constr σ)
+                → (x : ⟦ typeOf σ C ⟧P X) 
+                → match {σ} C (inj C x) ≡ just x
+match-inj-lemma {σ} C x rewrite sop-inj-lemma {σ} C x
+  with C ≟F C
+...| no abs   = ⊥-elim (abs refl)
+...| yes refl = refl
+
 -- * Fixpoint
 
 data Fix (σ : Sum) : Set where
   ⟨_⟩ : ⟦ σ ⟧S (Fix σ) → Fix σ 
+
+⟨⟩-Maybe-map : {σ : Sum}(f : ⟦ σ ⟧S (Fix σ) → Maybe (⟦ σ ⟧S (Fix σ)))
+             → Fix σ → Maybe (Fix σ)
+⟨⟩-Maybe-map f ⟨ x ⟩ = ⟨_⟩ <$> f x
 
 ⟨⟩-inj : {σ : Sum}{x y : ⟦ σ ⟧S (Fix σ)}
        → ⟨ x ⟩ ≡ ⟨ y ⟩ → x ≡ y
@@ -220,7 +232,6 @@ cata-uni f h hip ⟨ x ⟩
   rewrite hip ⟨ x ⟩ 
         = cong (λ P → f (fmapS P x)) (fun-ext (cata-uni f h hip))
 
-
 data Zipper (σ : Sum) : Set where
   here : Zipper σ
   peel : (C : Constr σ)
@@ -228,6 +239,10 @@ data Zipper (σ : Sum) : Set where
        → AllBut (λ x → ⟦ x ⟧A (Fix σ)) prf
        → Zipper σ
        → Zipper σ
+
+Zipper-depth : {σ : Sum} → Zipper σ → ℕ
+Zipper-depth here           = 0
+Zipper-depth (peel _ _ _ z) = 1 + Zipper-depth z 
 
 Zipper-match : {σ : Sum} → Zipper σ → Fix σ → Maybe (Fix σ)
 Zipper-match here x 
@@ -239,3 +254,11 @@ Zipper-inj : {σ : Sum} → Zipper σ → Fix σ → Fix σ
 Zipper-inj here x = x
 Zipper-inj (peel C idx as rest) x
   = ⟨ inj C (AllBut-fill idx (Zipper-inj rest x) as) ⟩
+
+Zipper-match-inj-lemma : {σ : Sum}(z : Zipper σ)(x : Fix σ)
+                       → Zipper-match z (Zipper-inj z x) ≡ just x
+Zipper-match-inj-lemma here x = refl
+Zipper-match-inj-lemma {σ} (peel C idx as rest) x
+  rewrite match-inj-lemma {σ} C (AllBut-fill idx (Zipper-inj rest x) as)
+        | AllBut-witness-fill-lemma idx (Zipper-inj rest x) as
+        = Zipper-match-inj-lemma rest x

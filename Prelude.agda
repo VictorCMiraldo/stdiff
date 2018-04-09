@@ -249,6 +249,14 @@ AllBut-fill : ∀{A l x}{P : A → Set} → (prf : x ∈ l) → P x → AllBut P
 AllBut-fill .(here refl) hip (here rest) = hip ∷ rest
 AllBut-fill .(there _) hip (there px ab) = px ∷ AllBut-fill _ hip ab
 
+AllBut-witness-fill-lemma
+  : ∀{A l x}{P : A → Set}(prf : x ∈ l)(el : P x)(xs : AllBut P prf)
+  → ∈-witness prf (AllBut-fill prf el xs) ≡ el
+AllBut-witness-fill-lemma .(here refl) el (here _) 
+  = refl
+AllBut-witness-fill-lemma .(there _) el (there hip xs) 
+  = AllBut-witness-fill-lemma _ el xs
+
 open import Data.String
   using (String ; primStringEquality)
   renaming (_++_ to strcat)

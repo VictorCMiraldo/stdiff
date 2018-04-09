@@ -33,16 +33,12 @@ module Regular.Predicates.Applies.Correctness.Functor
                 → {al : Al (At PatchRec) π₁ π₂}
                 → AppAl p₁ p₂ al
                 → ⟪ al ⟫P p₁ ≡ just p₂
-  AppAl-correct AppA0 = refl
-  AppAl-correct (AppAX x y xs ys px pxs h hip) 
-    rewrite AppAt-correct h
-          | AppAl-correct hip 
-          = refl
-  AppAl-correct (AppAins y xs ys al hip) 
-    rewrite AppAl-correct hip
-          = refl       
-  AppAl-correct (AppAdel x x' xs ys al hip)
-    rewrite AppAl-correct hip
+  AppAl-correct (AppA0 d d' i) 
+    = refl
+  AppAl-correct (AppAX {α} d d' i r rs {x} {x'} {xs} {xs'} hipR hipRS)
+    rewrite Prod-del-cat-lemma d' d (_∷_ {x = α} x xs)
+          | AppAt-correct hipR 
+          | AppAl-correct hipRS
           = refl
 
   AppSP-correct : ∀{π}{p₁ p₂ : ⟦ π ⟧P Rec}

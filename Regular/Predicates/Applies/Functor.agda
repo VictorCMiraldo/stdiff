@@ -39,10 +39,10 @@ module Regular.Predicates.Applies.Functor
              → Al (At PatchRec) π₁ π₂
              → Set
       where
-    AppA0 : ∀{π₁ π₂}(d : ⟦ π₁ ⟧P Rec)(i : ⟦ π₂ ⟧P Rec)
-          → AppAl d i (A0 d i)
+    AppA0 : ∀{π₁ π₂}(d d' : ⟦ π₁ ⟧P Rec)(i : ⟦ π₂ ⟧P Rec)
+          → AppAl d i (A0 d' i)
 
-    AppAX : ∀{α π₁ π₁' π₂ π₂'}(d : ⟦ π₁ ⟧P Rec)(i : ⟦ π₂ ⟧P Rec)
+    AppAX : ∀{α π₁ π₁' π₂ π₂'}(d d' : ⟦ π₁ ⟧P Rec)(i : ⟦ π₂ ⟧P Rec)
           → (r  : At PatchRec α)
           → (rs : Al (At PatchRec) π₁' π₂')
           → {x x' : ⟦ α ⟧A Rec}
@@ -51,7 +51,7 @@ module Regular.Predicates.Applies.Functor
           → AppAt x  x'  r
           → AppAl xs xs' rs
           → AppAl (Prod-cat d (x ∷ xs)) (Prod-cat i (x' ∷ xs')) 
-                  (AX d i r rs) 
+                  (AX d' i r rs) 
 
   data AppS : {σ : Sum} 
             → ⟦ σ ⟧S Rec → ⟦ σ ⟧S Rec 

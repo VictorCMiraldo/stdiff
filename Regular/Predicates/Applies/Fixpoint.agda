@@ -12,69 +12,8 @@ module Regular.Predicates.Applies.Fixpoint (μσ : Sum) where
     (Fix μσ) _≟Fix_ Alμ AppAlμ
     public
 
-  data AppCtxDel : ∀{π} 
-                 → ⟦ π ⟧P (Fix μσ)
-                 → Fix μσ  
-                 → Ctx π
-                 → Set
-      where
-    AppDelHere : ∀{π}(x y : Fix μσ)(spμ : Alμ)
-               → (pxs pxs' : ⟦ π ⟧P (Fix μσ))
-               → AppAlμ x y spμ
-               → AppCtxDel (x ∷ pxs) y (here spμ pxs')
-
-    AppDelThere : ∀{α π}(x x' : ⟦ α ⟧A (Fix μσ))(y : Fix μσ)
-                → (pxs : ⟦ π ⟧P (Fix μσ))
-                → (δ : Ctx π)
-                → AppCtxDel pxs y δ
-                → AppCtxDel (x ∷ pxs) y (there {α} x' δ)
-
-  data AppCtxIns : ∀{π} 
-                 → Fix μσ  
-                 → ⟦ π ⟧P (Fix μσ)
-                 → Ctx π
-                 → Set
-      where
-    AppInsHere : ∀{π}(x y : Fix μσ)(spμ : Alμ)
-               → (pys : ⟦ π ⟧P (Fix μσ))
-               → AppAlμ x y spμ
-               → AppCtxIns x (y ∷ pys) (here spμ pys)
-
-    AppInsThere : ∀{α π}(x : Fix μσ)(y : ⟦ α ⟧A (Fix μσ))
-                → (pys : ⟦ π ⟧P (Fix μσ))
-                → (δ : Ctx π)
-                → AppCtxIns x pys δ
-                → AppCtxIns x (y ∷ pys) (there {α} y δ)
-
-  AppCtxDel⇒AppAlμ
-    : ∀{π}{x : ⟦ π ⟧P (Fix μσ)}{y : Fix μσ}{δ : Ctx π}
-    → AppCtxDel x y δ
-    → ∃ (λ z → AppAlμ z y (getCtx δ))
-  AppCtxDel⇒AppAlμ (AppDelHere x y spμ pxs pxs' h) = x , h
-  AppCtxDel⇒AppAlμ (AppDelThere x x' y pys δ hip) = AppCtxDel⇒AppAlμ hip
-
-  AppCtxIns⇒AppAlμ
-    : ∀{π}{x : Fix μσ}{y : ⟦ π ⟧P (Fix μσ)}{δ : Ctx π}
-    → AppCtxIns x y δ
-    → ∃ (λ z → AppAlμ x z (getCtx δ))
-  AppCtxIns⇒AppAlμ (AppInsHere x y spμ pys h) = y , h
-  AppCtxIns⇒AppAlμ (AppInsThere x y pys δ hip) = AppCtxIns⇒AppAlμ hip
-
   data AppAlμ where
-    AppSpn : (x y : ⟦ μσ ⟧S (Fix μσ))(s : Patch Alμ μσ)
-           → AppS x y s
-           → AppAlμ ⟨ x ⟩ ⟨ y ⟩ (spn s)
-
-    AppIns : (x : Fix μσ)(C : Constr μσ)
-           → (Pys : ⟦ typeOf μσ C ⟧P (Fix μσ))
-           → (δ : Ctx (typeOf μσ C))
-           → AppCtxIns x Pys δ
-           → AppAlμ x ⟨ inj C Pys ⟩ (ins C δ)
- 
-    AppDel : (C : Constr μσ)
-           → (Pxs : ⟦ typeOf μσ C ⟧P (Fix μσ))
-           → (y : Fix μσ)
-           → (δ : Ctx (typeOf μσ C))
-           → AppCtxDel Pxs y δ
-           → AppAlμ ⟨ inj C Pxs ⟩ y (del C δ)
-                     
+    AppPeel : (d i : Zipper μσ){x y : ⟦ μσ ⟧S (Fix μσ)}
+            → (p : Patch Alμ μσ)
+            → AppS x  y  p
+            → AppAlμ (Zipper-inj d ⟨ x ⟩) (Zipper-inj i ⟨ y ⟩) (peel d i p)

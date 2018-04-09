@@ -35,30 +35,19 @@ module Regular.Predicates.Applies.Soundness.Functor
                 → (al : Al (At PatchRec) π₁ π₂)
                 → ⟪ al ⟫P p₁ ≡ just p₂
                 → AppAl p₁ p₂ al
-  AppAl-sound [] [] A0 hip 
-    = AppA0
-  AppAl-sound (x ∷ xs) ys       (Adel x' al) hip 
-    = AppAdel x x' xs ys al (AppAl-sound xs ys al hip)
-  AppAl-sound xs       (y ∷ ys) (Ains y' al) hip 
-    with ⟪ al ⟫P xs | inspect ⟪ al ⟫P xs
-  ...| nothing  | _      = Maybe-⊥-elim hip
-  ...| just xs' | [ XS ] 
-    rewrite proj₁ (All-∷-inj (just-inj hip))
-          | proj₂ (All-∷-inj (just-inj hip))
-          = AppAins y xs ys al (AppAl-sound xs ys al XS)
-  AppAl-sound (x ∷ xs) (y ∷ ys) (AX at al) hip 
-    with ⟪ at ⟫A x | inspect ⟪ at ⟫A x
+  AppAl-sound xs ys (A0 d .ys) refl = AppA0 xs d ys
+  AppAl-sound xs ys (AX {α = α} d i a p) hip 
+    with Prod-del d xs | inspect (Prod-del d) xs
+  ...| x' ∷ xs' | [ XS ] with ⟪ a ⟫A x' | inspect ⟪ a ⟫A x' 
   ...| nothing  | _ = Maybe-⊥-elim hip
-  ...| just x'  | [ AT ] 
-    with ⟪ al ⟫P xs | inspect ⟪ al ⟫P xs
+  ...| just r   | [ R ] with ⟪ p ⟫P xs' | inspect ⟪ p ⟫P xs'
   ...| nothing  | _ = Maybe-⊥-elim hip
-  ...| just xs' | [ AL ]
-    rewrite proj₁ (All-∷-inj (just-inj hip))
-          | proj₂ (All-∷-inj (just-inj hip))
-          = AppAX x y xs ys at al 
-                 (AppAt-sound x y at AT) 
-                 (AppAl-sound xs ys al AL)
-
+  ...| just rs  | [ RS ] 
+    with Prod-del-cat-inv d xs (x' ∷ xs') XS
+  ...| d' , KS rewrite KS 
+                     | just-inj (sym hip)
+                     = AppAX d' d i a p (AppAt-sound x' r a R) 
+                                        (AppAl-sound xs' rs p RS)
 
   AppSP-sound : ∀{π}(p₁ p₂ : ⟦ π ⟧P Rec)
                 → (ps : All (At PatchRec) π)

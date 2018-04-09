@@ -10,9 +10,13 @@ module Regular.Functor
 
   open import Regular.Internal.Functor Rec _≟Rec_
     public
+
+  {-
+  VCM: TODO
+
   open import Regular.Internal.ExtEnum.Functor Rec _≟Rec_ List Data.List.monadPlus
     public
-    
+  -}  
   
   module FunctorApplication
          (PatchRec : Set)

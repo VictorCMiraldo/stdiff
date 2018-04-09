@@ -7,9 +7,10 @@ module Regular.Fixpoint (σμ : Sum) where
 
   open import Regular.Internal.Fixpoint σμ
     public
+
+{- VCM: TODO: Fix enum
   open import Regular.Internal.ExtEnum.Fixpoint σμ List Data.List.monadPlus
     public
-    
   
   diffFix : Fix σμ → Fix σμ → Alμ
   diffFix x y with diff x y
@@ -22,6 +23,8 @@ module Regular.Fixpoint (σμ : Sum) where
       aux a (b ∷ bs) with costAlμ a ≤? costAlμ b
       ...| yes _ = aux a bs
       ...| no  _ = aux b bs
+-}
+
 
   module FixpointApplication where
 
