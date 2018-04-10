@@ -137,23 +137,20 @@ module Regular.Internal.Functor
                               + costAt r
                               + costAl costAt rs
 
-{-
-  Is an alignment maximal? We are only interested in maximal alignments!
-  ie, an alignment is maximal if it has the maximum possible number of AX constructors
+  -- Is an alignment maximal? We are only interested in maximal alignments!
+  -- ie, an alignment is maximal if it has the maximum possible number of AX constructors
 
-  isMaximal : ∀{π₁ π₂}{At : Atom → Set} → Alnf At π₁ π₂ → Set
+  isMaximal : ∀{π₁ π₂}{At : Atom → Set} → Al At π₁ π₂ → Set
   isMaximal (A0 {π₁} {π₂} d i)     = Disj π₁ π₂
   isMaximal (AX {π₁} {π₂} d i x p) = Disj π₁ π₂ × isMaximal p
 
-  isMaximal? : ∀{π₁ π₂}{At : Atom → Set}(al : Alnf At π₁ π₂) → Dec (isMaximal al)
+  isMaximal? : ∀{π₁ π₂}{At : Atom → Set}(al : Al At π₁ π₂) → Dec (isMaximal al)
   isMaximal? (A0 {π₁} {π₂} d i)     = disj-dec _≟Atom_ π₁ π₂
   isMaximal? (AX {π₁} {π₂} d i x p) 
     with disj-dec _≟Atom_ π₁ π₂ | isMaximal? p
   ...| yes l  | yes m  = yes (l , m)
   ...| yes l  | no abs = no (abs ∘ proj₂)
   ...| no abs | _      = no (abs ∘ proj₁)
--}
-
 
 -- ** Normal Form Alignments
 
