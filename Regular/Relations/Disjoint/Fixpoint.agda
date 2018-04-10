@@ -1,12 +1,12 @@
 open import Prelude
 open import Generic.Regular
 
-module Regular.Predicates.Disjoint.Fixpoint (μσ : Sum) where
+module Regular.Relations.Disjoint.Fixpoint (μσ : Sum) where
 
   open import Regular.Internal.Fixpoint μσ
   open import Regular.Internal.Functor (Fix μσ) _≟Fix_
-  open import Regular.Predicates.Identity.Fixpoint μσ
-  open import Regular.Predicates.Disjoint.Functor (Fix μσ) _≟Fix_ Alμ makeidAlμ identityAlμ
+  open import Regular.Relations.Identity.Fixpoint μσ
+  open import Regular.Relations.Disjoint.Functor (Fix μσ) _≟Fix_ Alμ makeidAlμ identityAlμ
     renaming (module DisjSymmetry to DisjSymmetryF)
     public
 

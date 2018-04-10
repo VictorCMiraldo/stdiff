@@ -1,7 +1,7 @@
 open import Prelude
 open import Generic.Regular
 
-module Regular.Predicates.Applies.Functor 
+module Regular.Relations.Applies.Functor 
        (Rec       : Set)
        (_≟Rec_    : (x y : Rec) → Dec (x ≡ y))
        (PatchRec  : Set)

@@ -1,7 +1,7 @@
 open import Prelude
 open import Generic.Regular
 
-module Regular.Predicates.Applies.Correctness.Functor 
+module Regular.Relations.Applies.Correctness.Functor 
        (Rec       : Set)
        (_≟Rec_    : (x y : Rec) → Dec (x ≡ y))
        (PatchRec  : Set)
@@ -14,7 +14,7 @@ module Regular.Predicates.Applies.Correctness.Functor
 
   open import Regular.Functor Rec _≟Rec_
   open FunctorApplication PatchRec applyRec
-  open import Regular.Predicates.Applies.Functor
+  open import Regular.Relations.Applies.Functor
     Rec _≟Rec_ PatchRec AppRec
 
   AppAt-correct : ∀{α}{a₁ a₂ : ⟦ α ⟧A Rec}{p : At PatchRec α}

@@ -1,14 +1,14 @@
 open import Prelude
 open import Generic.Regular
 
-module Regular.Predicates.Applies.Fixpoint (μσ : Sum) where
+module Regular.Relations.Applies.Fixpoint (μσ : Sum) where
 
   open import Regular.Internal.Fixpoint μσ
   open import Regular.Internal.Functor (Fix μσ) _≟Fix_
 
   data AppAlμ : Fix μσ → Fix μσ → Alμ → Set
 
-  open import Regular.Predicates.Applies.Functor
+  open import Regular.Relations.Applies.Functor
     (Fix μσ) _≟Fix_ Alμ AppAlμ
     public
 

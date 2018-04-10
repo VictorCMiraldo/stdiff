@@ -1,11 +1,11 @@
 open import Prelude
 open import Generic.Regular
 
-module Regular.Predicates.Applies.Soundness.Fixpoint (μσ : Sum) where
+module Regular.Relations.Applies.Soundness.Fixpoint (μσ : Sum) where
 
   open import Regular.Fixpoint μσ
   open import Regular.Internal.Functor (Fix μσ) _≟Fix_
-  open import Regular.Predicates.Applies.Fixpoint μσ
+  open import Regular.Relations.Applies.Fixpoint μσ
 
   -- * We need monadic functionality for Maybe
   open import Data.Maybe using (monadPlus)
@@ -18,7 +18,7 @@ module Regular.Predicates.Applies.Soundness.Fixpoint (μσ : Sum) where
                  → ⟪ p ⟫μ x ≡ just y
                  → AppAlμ x y p
 
-  open import Regular.Predicates.Applies.Soundness.Functor
+  open import Regular.Relations.Applies.Soundness.Functor
     (Fix μσ) _≟Fix_ Alμ AppAlμ ⟪_⟫μ AppAlμ-sound
     public
 

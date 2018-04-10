@@ -1,7 +1,7 @@
 open import Prelude
 open import Generic.Regular
 
-module Regular.Predicates.Disjoint.Functor
+module Regular.Relations.Disjoint.Functor
        (Rec       : Set)
        (_≟Rec_    : (x y : Rec) → Dec (x ≡ y))
        (PatchRec  : Set)
@@ -11,7 +11,7 @@ module Regular.Predicates.Disjoint.Functor
     where
 
   open import Regular.Internal.Functor Rec _≟Rec_
-  open import Regular.Predicates.Identity.Functor Rec _≟Rec_ PatchRec makeidR identityR
+  open import Regular.Relations.Identity.Functor Rec _≟Rec_ PatchRec makeidR identityR
 
   disjS  : {σ        : Sum}  → (s₁ s₂ : Patch PatchRec σ) → Set
  --  disjAl : {π₁ π₂ π₃ : Prod} → Al (At PatchRec) π₁ π₂ → Al (At PatchRec) π₁ π₃ → Set
