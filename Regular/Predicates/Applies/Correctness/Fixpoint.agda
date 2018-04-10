@@ -20,7 +20,6 @@ module Regular.Predicates.Applies.Correctness.Fixpoint (μσ : Sum) where
   open import Regular.Predicates.Applies.Correctness.Functor
     (Fix μσ) _≟Fix_ Alμ AppAlμ ⟪_⟫μ AppAlμ-correct
 
-  AppAlμ-correct (AppPeel d d' i {x} {y} p hip)
-    rewrite Zipper-match-inj-lemma d' ⟨ x ⟩ 
-          = {!!}
-          -- = cong (λ P → Zipper-inj i <$> (⟨_⟩ <$> P)) (AppS-correct hip)
+  AppAlμ-correct (AppPeel d d' i {x} {y} dd' p hip)
+    rewrite Path-match-inj-lemma d' d ⟨ x ⟩ dd'
+          = cong (λ P → Path-inj i <$> (⟨_⟩ <$> P)) (AppS-correct hip)

@@ -13,21 +13,21 @@ module Regular.Internal.Fixpoint (μσ : Sum) where
 -- ** Universe
 
   data Alμ : Set where
-    peel : (del ins : Zipper μσ) → Patch Alμ μσ → Alμ
+    peel : (del ins : Path μσ) → Patch Alμ μσ → Alμ
 
 -- ** Interpretation
 
   {-# TERMINATING #-}
   applyAlμ : Alμ → Fix μσ → Maybe (Fix μσ)
-  applyAlμ (peel d i p) x = Zipper-inj i 
-                       <$> (Zipper-match d x 
+  applyAlμ (peel d i p) x = Path-inj i 
+                       <$> (Path-match d x 
                        >>= ⟨⟩-Maybe-map (applyPatch applyAlμ p))
 
 -- ** Cost semantics
 
   {-# TERMINATING #-}
   costAlμ : Alμ → ℕ
-  costAlμ (peel d i p) = Zipper-depth d + Zipper-depth i + costPatch costAlμ p
+  costAlμ (peel d i p) = Path-depth d + Path-depth i + costPatch costAlμ p
 
 -- ** Aliasses
 

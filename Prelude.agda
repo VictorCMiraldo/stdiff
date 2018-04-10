@@ -53,6 +53,7 @@ dec-refl _≟_ x with x ≟ x
 
 open import Data.Product
   renaming (map to _><_)
+  hiding (swap)
   public
 
 open import Data.Sum

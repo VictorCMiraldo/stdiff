@@ -232,49 +232,65 @@ cata-uni f h hip ⟨ x ⟩
   rewrite hip ⟨ x ⟩ 
         = cong (λ P → f (fmapS P x)) (fun-ext (cata-uni f h hip))
 
-data Zipper (σ : Sum) : Set where
-  here : Zipper σ
+-- * Paths inside a fixpoint
+--
+--   These are almost like zippers, but since we don't
+--   keep a focus point, I decided to call them something
+--   else.
+
+data Path (σ : Sum) : Set where
+  here : Path σ
   peel : (C : Constr σ)
        → (prf : I ∈ typeOf σ C)
        → AllBut (λ x → ⟦ x ⟧A (Fix σ)) prf
-       → Zipper σ
-       → Zipper σ
+       → Path σ
+       → Path σ
 
-Zipper-depth : {σ : Sum} → Zipper σ → ℕ
-Zipper-depth here           = 0
-Zipper-depth (peel _ _ _ z) = 1 + Zipper-depth z 
+-- Two paths are compatible if they point the same way under
+-- the same constructors. The data that they hold is irrelevant.
+data PathCompatible {σ : Sum} : Path σ → Path σ → Set where
+  HH : PathCompatible here here
+  PP : ∀{C prf d d' p p'}
+     → PathCompatible p p'
+     → PathCompatible (peel C prf d p) (peel C prf d' p')
 
-Zipper-match : {σ : Sum} → Zipper σ → Fix σ → Maybe (Fix σ)
-Zipper-match here x 
+Path-depth : {σ : Sum} → Path σ → ℕ
+Path-depth here           = 0
+Path-depth (peel _ _ _ z) = 1 + Path-depth z 
+
+Path-match : {σ : Sum} → Path σ → Fix σ → Maybe (Fix σ)
+Path-match here x 
   = just x
-Zipper-match (peel C idx _ rest) ⟨ x ⟩ 
-  = match C x >>= Zipper-match rest ∘ ∈-witness idx
+Path-match (peel C idx _ rest) ⟨ x ⟩ 
+  = match C x >>= Path-match rest ∘ ∈-witness idx
 
-Zipper-inj : {σ : Sum} → Zipper σ → Fix σ → Fix σ
-Zipper-inj here x = x
-Zipper-inj (peel C idx as rest) x
-  = ⟨ inj C (AllBut-fill idx (Zipper-inj rest x) as) ⟩
+Path-inj : {σ : Sum} → Path σ → Fix σ → Fix σ
+Path-inj here x = x
+Path-inj (peel C idx as rest) x
+  = ⟨ inj C (AllBut-fill idx (Path-inj rest x) as) ⟩
 
-Zipper-match-inj-lemma : {σ : Sum}(z : Zipper σ)(x : Fix σ)
-                       → Zipper-match z (Zipper-inj z x) ≡ just x
-Zipper-match-inj-lemma here x = refl
-Zipper-match-inj-lemma {σ} (peel C idx as rest) x
-  rewrite match-inj-lemma {σ} C (AllBut-fill idx (Zipper-inj rest x) as)
-        | AllBut-witness-fill-lemma idx (Zipper-inj rest x) as
-        = Zipper-match-inj-lemma rest x
+Path-match-inj-lemma : {σ : Sum}(z z' : Path σ)(x : Fix σ)
+                     → PathCompatible z z'
+                     → Path-match z (Path-inj z' x) ≡ just x
+Path-match-inj-lemma here here x HH = refl
+Path-match-inj-lemma {σ} (peel C idx as p) (peel .C .idx as' p') x (PP hip)
+  rewrite match-inj-lemma {σ} C (AllBut-fill idx (Path-inj p' x) as')
+        | AllBut-witness-fill-lemma idx (Path-inj p' x) as'
+        = Path-match-inj-lemma p p' x hip
 
-Zipper-match-inj-inv : {σ : Sum}(z : Zipper σ)(x x' : Fix σ)
-                     → Zipper-match z x ≡ just x'
-                     → ∃ (λ z' → x ≡ Zipper-inj z' x')
-Zipper-match-inj-inv here x .x refl = here , refl
-Zipper-match-inj-inv (peel C prf x₁ z) ⟨ x ⟩ x' hip 
+Path-match-inj-inv : {σ : Sum}(z : Path σ)(x x' : Fix σ)
+                     → Path-match z x ≡ just x'
+                     → ∃ (λ z' → x ≡ Path-inj z' x' × PathCompatible z z')
+Path-match-inj-inv here x .x refl = here , (refl , HH)
+Path-match-inj-inv (peel C prf x₁ z) ⟨ x ⟩ x' hip 
   with sop x
 ...| tag Cx Px with C ≟F Cx
 ...| no abs = Maybe-⊥-elim hip
-...| yes refl with Zipper-match-inj-inv z (∈-witness prf Px) x' hip
-...| z' , ind with AllBut-fill-drop-lemma {x = I} prf Px
+...| yes refl with Path-match-inj-inv z (∈-witness prf Px) x' hip
+...| z' , (ind , compat) with AllBut-fill-drop-lemma {x = I} prf Px
 ...| res = peel C prf (All-drop-∈ prf Px) z' 
-         , cong (⟨_⟩ ∘ inj Cx) 
+         , (cong (⟨_⟩ ∘ inj Cx) 
                 (sym (trans (cong (λ P → AllBut-fill prf P (All-drop-∈ prf Px)) 
                                   (sym ind)) 
                             (sym res)))
+         , PP compat )

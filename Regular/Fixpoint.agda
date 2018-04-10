@@ -3,7 +3,8 @@ open import Generic.Regular
 
 module Regular.Fixpoint (σμ : Sum) where
  
-  open import Data.List using (monadPlus)
+  -- VCM: need to update standard lib at UU
+  -- open import Data.List using (monadPlus)
 
   open import Regular.Internal.Fixpoint σμ
     public

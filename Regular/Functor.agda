@@ -6,7 +6,7 @@ module Regular.Functor
            (_≟Rec_ : (x y : Rec) → Dec (x ≡ y))
        where
  
-  open import Data.List using (monadPlus)
+  -- open import Data.List using (monadPlus)
 
   open import Regular.Internal.Functor Rec _≟Rec_
     public
