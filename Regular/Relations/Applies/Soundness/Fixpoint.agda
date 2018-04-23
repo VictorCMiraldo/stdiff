@@ -22,8 +22,8 @@ module Regular.Relations.Applies.Soundness.Fixpoint (μσ : Sum) where
     (Fix μσ) _≟Fix_ Alμ AppAlμ ⟪_⟫μ AppAlμ-sound
     public
 
-  AppAlμ-sound x ⟨ y ⟩ (peel d i r) hip
-    with Path-match d x | inspect (Path-match d) x
+  AppAlμ-sound ⟨ x ⟩ ⟨ y ⟩ (peel d i r) hip
+    with Path-match d ⟨ x ⟩ | inspect (Path-match d) ⟨ x ⟩
   ...| nothing     | _ = Maybe-⊥-elim hip
   ...| just ⟨ x' ⟩ | [ X ] 
     with ⟪ r ⟫S x' | inspect ⟪ r ⟫S x'
@@ -33,6 +33,4 @@ module Regular.Relations.Applies.Soundness.Fixpoint (μσ : Sum) where
   ...| nothing = Maybe-⊥-elim hip'
   ...| just k  
     rewrite just-inj (sym hip')
-    with Path-match-inj-inv d x ⟨ x' ⟩ X
-  ...| d' , (prf , compat) 
-    rewrite prf = AppPeel d' d i compat r (AppS-sound x' k r RX) 
+          = AppPeel d i X r (AppS-sound x' k r RX)

@@ -13,7 +13,7 @@ module Regular.Internal.Fixpoint (μσ : Sum) where
 -- ** Universe
 
   data Alμ : Set where
-    peel : (del ins : Path μσ) → Patch Alμ μσ → Alμ
+    peel : PathD μσ → PathI μσ → Patch Alμ μσ → Alμ
 
 -- ** Interpretation
 

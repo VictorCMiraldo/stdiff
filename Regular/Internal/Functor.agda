@@ -84,6 +84,8 @@ module Regular.Internal.Functor
   data Al (At : Atom → Set) : Prod → Prod → Set where
     A0 : ∀{π₀ π₁}(del : ⟦ π₀ ⟧P Rec)(ins : ⟦ π₁ ⟧P Rec)
        → Al At π₀ π₁
+    -- VCM: I think we DO want to have a proof of
+    -- maximality here: (π₀ ∩ π₁ ≡ ∅)
     AX : ∀{π₀ π₁ π₀' π₁' α}(del : ⟦ π₀ ⟧P Rec)(ins : ⟦ π₁ ⟧P Rec)
        → At α → Al At π₀' π₁' → Al At (π₀ ++ α ∷ π₀') (π₁ ++ α ∷ π₁')
 

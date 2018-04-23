@@ -20,6 +20,8 @@ module Regular.Relations.Applies.Correctness.Fixpoint (μσ : Sum) where
   open import Regular.Relations.Applies.Correctness.Functor
     (Fix μσ) _≟Fix_ Alμ AppAlμ ⟪_⟫μ AppAlμ-correct
 
-  AppAlμ-correct (AppPeel d d' i {x} {y} dd' p hip)
-    rewrite Path-match-inj-lemma d' d ⟨ x ⟩ dd'
-          = cong (λ P → Path-inj i <$> (⟨_⟩ <$> P)) (AppS-correct hip)
+  AppAlμ-correct (AppPeel d i {x} {x'} prf p hip)
+    with Path-match d ⟨ x ⟩ 
+  ...| nothing = Maybe-⊥-elim prf
+  ...| just ⟨ z ⟩ with ⟨⟩-inj (just-inj prf)
+  ...| refl = cong (λ P → Path-inj i <$> (⟨_⟩ <$> P)) (AppS-correct hip)

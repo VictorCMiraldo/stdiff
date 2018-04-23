@@ -237,50 +237,65 @@ cata-uni f h hip ⟨ x ⟩
 --   These are almost like zippers, but since we don't
 --   keep a focus point, I decided to call them something
 --   else.
+-- 
+--   Moreover, since deletion paths carry no data,
+--   we should reflect this on the type level.
 
-data Path (σ : Sum) : Set where
-  here : Path σ
+data Path (F : Atom → Set)(σ : Sum) : Set where
+  here : Path F σ
   peel : (C : Constr σ)
        → (prf : I ∈ typeOf σ C)
-       → AllBut (λ x → ⟦ x ⟧A (Fix σ)) prf
-       → Path σ
-       → Path σ
+       → AllBut F prf
+       → Path F σ
+       → Path F σ
+
+Path-map : {σ : Sum}{F G : Atom → Set}
+         → (∀ α → F α → G α)
+         → Path F σ → Path G σ
+Path-map f here = here
+Path-map f (peel C prf xs p) = peel C prf ez (Path-map f p)
+  where
+    -- VCM: write a AllBut module somewhere
+    postulate ez : ∀{a}{A : Set a} → A
+
+PathI : Sum → Set
+PathI σ = Path (λ α → ⟦ α ⟧A (Fix σ)) σ
+
+PathD : Sum → Set
+PathD σ = Path (λ _ → Unit) σ
+
+Path-match : {σ : Sum} → PathD σ → Fix σ → Maybe (Fix σ)
+Path-match here                  x   = just x
+Path-match (peel C idx _ rest) ⟨ x ⟩ = match C x >>= Path-match rest ∘ ∈-witness idx
+
+Path-inj : {σ : Sum} → PathI σ → Fix σ → Fix σ
+Path-inj here                 x = x
+Path-inj (peel C idx as rest) x = ⟨ inj C (AllBut-fill idx (Path-inj rest x) as) ⟩
 
 -- Two paths are compatible if they point the same way under
 -- the same constructors. The data that they hold is irrelevant.
-data PathCompatible {σ : Sum} : Path σ → Path σ → Set where
+data PathCompatible {σ : Sum}{F F' : Atom → Set} : Path F σ → Path F' σ → Set where
   HH : PathCompatible here here
   PP : ∀{C prf d d' p p'}
      → PathCompatible p p'
      → PathCompatible (peel C prf d p) (peel C prf d' p')
 
-Path-depth : {σ : Sum} → Path σ → ℕ
+Path-depth : {σ : Sum}{F : Atom → Set} → Path F σ → ℕ
 Path-depth here           = 0
 Path-depth (peel _ _ _ z) = 1 + Path-depth z 
 
-Path-match : {σ : Sum} → Path σ → Fix σ → Maybe (Fix σ)
-Path-match here x 
-  = just x
-Path-match (peel C idx _ rest) ⟨ x ⟩ 
-  = match C x >>= Path-match rest ∘ ∈-witness idx
-
-Path-inj : {σ : Sum} → Path σ → Fix σ → Fix σ
-Path-inj here x = x
-Path-inj (peel C idx as rest) x
-  = ⟨ inj C (AllBut-fill idx (Path-inj rest x) as) ⟩
-
-Path-match-inj-lemma : {σ : Sum}(z z' : Path σ)(x : Fix σ)
-                     → PathCompatible z z'
-                     → Path-match z (Path-inj z' x) ≡ just x
+Path-match-inj-lemma : {σ : Sum}(zd : PathD σ)(zi : PathI σ)(x : Fix σ)
+                     → PathCompatible zd zi
+                     → Path-match zd (Path-inj zi x) ≡ just x
 Path-match-inj-lemma here here x HH = refl
 Path-match-inj-lemma {σ} (peel C idx as p) (peel .C .idx as' p') x (PP hip)
   rewrite match-inj-lemma {σ} C (AllBut-fill idx (Path-inj p' x) as')
         | AllBut-witness-fill-lemma idx (Path-inj p' x) as'
         = Path-match-inj-lemma p p' x hip
 
-Path-match-inj-inv : {σ : Sum}(z : Path σ)(x x' : Fix σ)
-                     → Path-match z x ≡ just x'
-                     → ∃ (λ z' → x ≡ Path-inj z' x' × PathCompatible z z')
+Path-match-inj-inv : {σ : Sum}(zd : PathD σ)(x x' : Fix σ)
+                     → Path-match zd x ≡ just x'
+                     → ∃ (λ zi → x ≡ Path-inj zi x' × PathCompatible zd zi)
 Path-match-inj-inv here x .x refl = here , (refl , HH)
 Path-match-inj-inv (peel C prf x₁ z) ⟨ x ⟩ x' hip 
   with sop x
@@ -294,3 +309,4 @@ Path-match-inj-inv (peel C prf x₁ z) ⟨ x ⟩ x' hip
                                   (sym ind)) 
                             (sym res)))
          , PP compat )
+
