@@ -101,22 +101,18 @@ module Regular.Internal.Functor
 
   -- VCM: TODO: transport this to 'All' and put them in the prelude.
   --            call it _++_ and drop.
-  Prod-cat : ∀{π₀ π₁} → ⟦ π₀ ⟧P Rec → ⟦ π₁ ⟧P Rec → ⟦ π₀ ++ π₁ ⟧P Rec
-  Prod-cat {[]}      []       qs = qs
-  Prod-cat {α₀ ∷ π₀} (p ∷ ps) qs = p ∷ Prod-cat ps qs
-
   Prod-del : ∀{π₀ π₁} → ⟦ π₀ ⟧P Rec → ⟦ π₀ ++ π₁ ⟧P Rec → ⟦ π₁ ⟧P Rec
   Prod-del {[]}           p       ps  = ps
   Prod-del {α₀ ∷ π₀} (_ ∷ p) (_ ∷ ps) = Prod-del p ps
 
   Prod-del-cat-lemma : ∀{π₀ π₁}(x x' : ⟦ π₀ ⟧P Rec)(y : ⟦ π₁ ⟧P Rec)
-                     → Prod-del x (Prod-cat x' y) ≡ y
+                     → Prod-del x (All-++ x' y) ≡ y
   Prod-del-cat-lemma []       []         y = refl
   Prod-del-cat-lemma (x ∷ xs) (x' ∷ xs') y = Prod-del-cat-lemma xs xs' y
 
   Prod-del-cat-inv : ∀{π₀ π₁}(x : ⟦ π₀ ⟧P Rec)(y : ⟦ π₀ ++ π₁ ⟧P Rec)(z : ⟦ π₁ ⟧P Rec)
                    → Prod-del x y ≡ z
-                   → ∃ (λ x' → y ≡ Prod-cat {π₀} x' z)
+                   → ∃ (λ x' → y ≡ All-++ {xs = π₀} x' z)
   Prod-del-cat-inv []       y        _ refl = [] , refl
   Prod-del-cat-inv (x ∷ xs) (y ∷ ys) z hip 
     with Prod-del-cat-inv xs ys z hip
@@ -126,7 +122,7 @@ module Regular.Internal.Functor
            (applyAt : ∀ {α} → At α → ⟦ α ⟧A Rec → Maybe (⟦ α ⟧A Rec)) →
            Al At π₁ π₂ → ⟦ π₁ ⟧P Rec → Maybe (⟦ π₂ ⟧P Rec)
   applyAl at (A0 d i)      p = just i -- should we check that 'd ≡ p' ?
-  applyAl at (AX d i r rs) p = Prod-cat i 
+  applyAl at (AX d i r rs) p = All-++ i 
                            <$> (All-head-map (at r) (applyAl at rs) (Prod-del d p))
 
   costAl : ∀{π₁ π₂ At} 

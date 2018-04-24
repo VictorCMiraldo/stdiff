@@ -45,25 +45,82 @@ module Regular.Internal.ExtEnum.Functor
 
 -- ** Enumerating alignments
 
+  -- create only maximal alignments.
+  -- keeps an acumulator of things to delete or insert.
+  -- PRECONDITION: πd ∩ πi ≡ ∅
+  -- 
+  alignmax : ∀{πd πi π₁ π₂} 
+           → ⟦ πd ⟧P Rec → ⟦ πi ⟧P Rec
+           → ⟦ π₁ ⟧P Rec → ⟦ π₂ ⟧P Rec 
+           → M (Al TrivialA  (reverse πd ++ π₁) (reverse πi ++ π₂))
+
   align : ∀{π₁ π₂} → ⟦ π₁ ⟧P Rec → ⟦ π₂ ⟧P Rec → M (Al TrivialA π₁ π₂)
-  align  [] [] = return A0
-  align  [] (at₂ ∷ ats₂) = Ains at₂ <$> align [] ats₂
-  align (at₁ ∷ ats₁) [] = Adel at₁ <$> align ats₁ []
-  align {α₁ ∷ π₁} {α₂ ∷ π₂} (at₁ ∷ ats₁) (at₂ ∷ ats₂) with α₁ ≟Atom α₂
-  ... | yes refl = AX (at₁ , at₂) <$> align ats₁ ats₂
-                 ∣ Adel at₁ <$> align ats₁ (at₂ ∷ ats₂)
-                 ∣ Ains at₂ <$> align (at₁ ∷ ats₁) ats₂
-  ... | no ¬p = Adel at₁ <$> align ats₁ (at₂ ∷ ats₂)
-              ∣ Ains at₂ <$> align (at₁ ∷ ats₁) ats₂
+  align ats₁ ats₂ = alignmax [] [] ats₁ ats₂
+
+  guardDisj : {A : Set}(πd πi : Prod) → M A → M A
+  guardDisj πd πi m
+    with disj-dec _≟Atom_ πd πi
+  ...| no  _ = ∅
+  ...| yes _ = m
+
+  private
+    reverse-lemma : ∀{a}{A : Set a}(xs ys : List A)(x : A)
+                  → reverse (x ∷ xs) ++ ys ≡ reverse xs ++ x ∷ ys
+    reverse-lemma xs ys x 
+      rewrite unfold-reverse x xs 
+            | ++-assoc (reverse xs) (x ∷ []) ys
+            = refl
+
+  alignmax-ins : ∀{πd πi π₁ π₂ α}
+               → ⟦ πd ⟧P Rec → ⟦ πi ⟧P Rec
+               → ⟦ π₁ ⟧P Rec → ⟦ π₂ ⟧P Rec → ⟦ α ⟧A Rec 
+               → M (Al TrivialA (reverse πd ++ π₁) (reverse πi ++ α ∷ π₂))
+  alignmax-ins {πd} {πi} {π₁} {π₂} {α} cd ci ats₁ ats₂ at 
+    rewrite sym (reverse-lemma πi π₂ α) 
+          = guardDisj πd (α ∷ πi) 
+                      (alignmax cd (at ∷ ci) ats₁ ats₂)  
+
+  alignmax-del : ∀{πd πi π₁ π₂ α}
+               → ⟦ πd ⟧P Rec → ⟦ πi ⟧P Rec
+               → ⟦ π₁ ⟧P Rec → ⟦ π₂ ⟧P Rec → ⟦ α ⟧A Rec 
+               → M (Al TrivialA (reverse πd ++ α ∷ π₁) (reverse πi ++ π₂))
+  alignmax-del {πd} {πi} {π₁} {π₂} {α} cd ci ats₁ ats₂ at 
+    rewrite sym (reverse-lemma πd π₁ α) 
+          = guardDisj (α ∷ πd) πi
+                      (alignmax (at ∷ cd) ci ats₁ ats₂)  
+
+{-
+  alignmax-cpy : ∀{πd πi π₁ π₂ α}
+               → ⟦ πd ⟧P Rec → ⟦ πi ⟧P Rec
+               → ⟦ π₁ ⟧P Rec → ⟦ π₂ ⟧P Rec 
+               → ⟦ α  ⟧A Rec → ⟦ α  ⟧A Rec 
+               → M (Al TrivialA (reverse πd ++ α ∷ π₁) (reverse πi ++ π₂))
+  alignmax-cpy {πd} {πi} {π₁} {π₂} {α} cd ci ats₁ ats₂ at₁ at₂
+    = ?
+-}
+
+  alignmax {πd} {πi} cd ci [] [] 
+    rewrite ++-identityʳ (reverse πd)
+          | ++-identityʳ (reverse πi)
+          = return (A0 (All-rev cd) (All-rev ci))
+  alignmax {πd} {πi} {α ∷ π₁} cd ci (at₁ ∷ ats₁) [] 
+     = alignmax-del cd ci ats₁ [] at₁
+  alignmax {πd} {πi} {_} {α ∷ π₂} cd ci [] (at₂ ∷ ats₂)
+     = alignmax-ins cd ci [] ats₂ at₂
+  alignmax {πd} {πi} {α₁ ∷ π₁} {α₂ ∷ π₂} cd ci (at₁ ∷ ats₁) (at₂ ∷ ats₂) 
+    with α₁ ≟Atom α₂
+  ...| yes refl = AX (All-rev cd) (All-rev ci) (at₁ , at₂) <$> alignmax [] [] ats₁ ats₂ 
+                ∣ alignmax-del cd ci        ats₁  (at₂ ∷ ats₂) at₁ 
+                ∣ alignmax-ins cd ci (at₁ ∷ ats₁)        ats₂  at₂
+  ...| no _     = alignmax-del cd ci        ats₁  (at₂ ∷ ats₂) at₁ 
+                ∣ alignmax-ins cd ci (at₁ ∷ ats₁)        ats₂  at₂
 
   al-mapM : ∀{π₁ π₂}
             {At₁ At₂ : Atom → Set}
           → (At₁ ⊆M At₂) 
           → Al At₁ π₁ π₂ → M (Al At₂ π₁ π₂)
-  al-mapM f A0 = return A0
-  al-mapM f (Adel at al) = Adel at <$> al-mapM f al
-  al-mapM f (Ains at al) = Ains at <$> al-mapM f al
-  al-mapM f (AX at al) = AX <$> f at ⊛ al-mapM f al
+  al-mapM f (A0 d i)     = return (A0 d i)
+  al-mapM f (AX d i x p) = AX d i <$> f x ⊛ al-mapM f p
 
   diffAt : ∀ {α PatchRec} → (Rec → Rec → M PatchRec) → ⟦ α ⟧A Rec → ⟦ α ⟧A Rec → M (At PatchRec α)
   diffAt {K κ} diffR k₁ k₂ = return (set (k₁ , k₂))

@@ -139,14 +139,39 @@ open import Data.Nat.Properties.Simple
   public
 
 open import Data.List
-  using (List ; _∷_ ; [] ; length ; _++_)
+  using (List ; _∷_ ; [] ; length ; _++_ ; _∷ʳ_ ; reverse)
   renaming (map to List-map ; zip to List-zip)
+  public
+
+open import Data.List.Properties
+  using ( ++-assoc ; ++-identityʳ ; length-++ ; reverse-++-commute 
+        ; unfold-reverse )
   public
 
 open import Data.List.All
   using (All ; _∷_ ; []) 
   renaming (map to All-map)
   public
+
+All-snoc
+  : ∀{a}{A : Set a}{P : A → Set}{x : A}{xs : List A}
+  → All P xs → P x → All P (xs ∷ʳ x)
+All-snoc []        x = x ∷ []
+All-snoc (px ∷ xs) x = px ∷ (All-snoc xs x)
+
+All-rev 
+  : ∀{a}{A : Set a}{P : A → Set}{xs : List A}
+  → All P xs → All P (reverse xs)
+All-rev []       = []
+All-rev {xs = x ∷ xs} (a ∷ as) 
+  rewrite unfold-reverse x xs 
+        = All-snoc (All-rev as) a
+
+All-++ 
+  : ∀{a}{A : Set a}{P : A → Set}{xs ys : List A}
+  → All P xs → All P ys → All P (xs ++ ys)
+All-++ [] ys       = ys
+All-++ (x ∷ xs) ys = x ∷ (All-++ xs ys)
 
 All-∷-inj 
   : ∀{a}{A : Set a}{P : A → Set}{x : A}{xs : List A}

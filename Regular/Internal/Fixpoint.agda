@@ -15,6 +15,17 @@ module Regular.Internal.Fixpoint (μσ : Sum) where
   data Alμ : Set where
     peel : PathD μσ → PathI μσ → Patch Alμ μσ → Alμ
 
+  -- Is a recursive alignment maximal?
+  isMaximalμ : Alμ → Set
+  isMaximalμ (peel d i p) = d ≡ here ⊎ i ≡ here
+
+  isMaximalμ? : (p : Alμ) → Dec (isMaximalμ p)
+  isMaximalμ? (peel here here           p) = yes (inj₁ refl)
+  isMaximalμ? (peel here (peel _ _ _ _) p) = yes (inj₁ refl)
+  isMaximalμ? (peel (peel _ _ _ _) here p) = yes (inj₂ refl)
+  isMaximalμ? (peel (peel _ _ _ _) (peel _ _ _ _) _)
+    = no λ { (inj₁ ()) ; (inj₂ ()) }
+
 -- ** Interpretation
 
   {-# TERMINATING #-}

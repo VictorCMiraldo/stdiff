@@ -47,6 +47,31 @@ module Regular.Lab.2-3-Tree where
   open import Regular.Functor 2-3-tree _≟Fix_
     public
 
+  
+
+  p1 p2 : Prod
+
+  p1 = I ∷ K `ℕ ∷ K `ℕ ∷ I ∷ I ∷ []
+  p2 = K `ℕ ∷ I ∷ I ∷ []
+
+  ats₁ : ⟦ p1 ⟧P 2-3-tree
+  ats₁ = leaf ∷ (4 ∷ (7 ∷ (leaf ∷ (leaf ∷ []))))
+
+  ats₂ : ⟦ p2 ⟧P 2-3-tree
+  ats₂ = 3 ∷ leaf ∷ leaf ∷ []
+
+  als : List (Al TrivialA p1 p2)
+  als = align ats₁ ats₂
+
+  decide : {A : Set} → Dec A → Bool
+  decide (yes _) = true
+  decide (no  _) = false
+
+  ok : List Bool
+  ok = List-map (decide ∘ isMaximal?) als
+
+  
+{-
   open import Regular.Fixpoint 2-3-treeF
     public
 
@@ -106,4 +131,4 @@ module Regular.Lab.2-3-Tree where
 
   es23 : ES (I ∷ []) (I ∷ [])
   es23 = getDiff (diffT (t₂ ∷ []) (t₃ ∷ []))
-  
+-}

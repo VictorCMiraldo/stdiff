@@ -6,17 +6,14 @@ module Regular.Functor
            (_≟Rec_ : (x y : Rec) → Dec (x ≡ y))
        where
  
-  -- open import Data.List using (monadPlus)
+  open import Data.List.Categorical using (monadPlus)
 
   open import Regular.Internal.Functor Rec _≟Rec_
     public
 
-  {-
-  VCM: TODO
-
-  open import Regular.Internal.ExtEnum.Functor Rec _≟Rec_ List Data.List.monadPlus
+  open import Regular.Internal.ExtEnum.Functor Rec _≟Rec_ List 
+                                               Data.List.Categorical.monadPlus
     public
-  -}  
   
   module FunctorApplication
          (PatchRec : Set)
