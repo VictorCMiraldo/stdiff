@@ -201,6 +201,14 @@ Any-there-inj refl = refl
 _∈_ : ∀{a}{A : Set a} → A → List A → Set a
 x ∈ l = Any (_≡_ x) l
 
+-- Splits the list right in the witness 
+∈-split : ∀{a}{A : Set a}{x : A}{l : List A}
+        → x ∈ l → List A × A × List A
+∈-split (here {x} {xs} _)  = [] , x , xs
+∈-split (there {x} {xs} p) 
+  = let (pre , res , post) = ∈-split p 
+     in (x ∷ pre , res , post)
+
 ∈-witness : ∀{a b}{A : Set a}{P : A → Set b}{l : List A}{x : A}
           → x ∈ l → All P l → P x
 ∈-witness (here refl) (p ∷ ps) = p

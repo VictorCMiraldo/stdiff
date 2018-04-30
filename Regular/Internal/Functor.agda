@@ -135,21 +135,80 @@ module Regular.Internal.Functor
                               + costAt r
                               + costAl costAt rs
 
+  insAl : ∀{π₁ π₂}{At : Atom → Set} → Al At π₁ π₂ → Prod
+  insAl (A0 {π₁} {_} _ _)     = π₁
+  insAl (AX {π₁} {_} _ _ _ _) = π₁
+
+  delAl : ∀{π₁ π₂}{At : Atom → Set} → Al At π₁ π₂ → Prod
+  delAl (A0 {_} {π₂} _ _)     = π₂
+  delAl (AX {_} {π₂} _ _ _ _) = π₂
+
   -- Is an alignment maximal? We are only interested in maximal alignments!
   -- ie, an alignment is maximal if it has the maximum possible number of AX constructors
 
   isMaximal : ∀{π₁ π₂}{At : Atom → Set} → Al At π₁ π₂ → Set
   isMaximal (A0 {π₁} {π₂} d i)     = Disj π₁ π₂
-  isMaximal (AX {π₁} {π₂} d i x p) = Disj π₁ π₂ × isMaximal p
+  -- There is a tricky case for maximality here!
+  -- At the end of an alignment, if an AX doesn't delete and an A0 doesn't
+  -- insert, we have to ensure disjointness of the insertions of AX and deletions
+  -- of A0 (and vice-versa)
+  isMaximal (AX {π₁} {π₂} {α = α} d i x p) 
+    with insAl p | delAl p
+  ...| πi | πd
+    with ∈-dec _≟Atom_ α π₁ | ∈-dec _≟Atom_ α π₂
+  -- If α ∈ π₁ ∧ α ∈ π₂ Then π₁ ∩ π₂ ≠ ∅
+  ...| yes α∈π₁ | yes α∈π₂ = ⊥
+  -- If α belongs to none, we just want them to be disjoint 
+  ...| no _     | no _     = Disj π₁ π₂ × isMaximal p
+  -- If α belongs to the deleted set, we have to make sure that
+  -- had we chosen to sync with the deleted a : ⟦ α ⟧, there would be no
+  -- overlap ahead.
+  -- TODO: what if α belongs in π₁ many times.
+  ...| yes α∈π₁ | no _     
+     = let (d0 , α' , d1) = ∈-split α∈π₁
+        in Disj (d1 ++ α ∷ πd) πi × Disj d0 πi × isMaximal p
+  ...| no _     | yes α∈π₂
+     = let (i0 , α' , i1) = ∈-split α∈π₂
+        in Disj πd (i1 ++ α ∷ πi) × Disj πd i0 × isMaximal p
+
 
   isMaximal? : ∀{π₁ π₂}{At : Atom → Set}(al : Al At π₁ π₂) → Dec (isMaximal al)
   isMaximal? (A0 {π₁} {π₂} d i)     = disj-dec _≟Atom_ π₁ π₂
-  isMaximal? (AX {π₁} {π₂} d i x p) 
+  isMaximal? (AX {π₁} {π₂} {α = α} d i x p)
+    with insAl p | delAl p
+  ...| πi | πd
+    with ∈-dec _≟Atom_ α π₁ | ∈-dec _≟Atom_ α π₂
+  ...| yes α∈π₁ | yes α∈π₂ = no (λ ())
+  ...| no _     | no _ 
     with disj-dec _≟Atom_ π₁ π₂ | isMaximal? p
   ...| yes l  | yes m  = yes (l , m)
   ...| yes l  | no abs = no (abs ∘ proj₂)
   ...| no abs | _      = no (abs ∘ proj₁)
+  isMaximal? (AX {π₁} {π₂} {α = α} d i x p) | πi | πd | yes α∈π₁ | no _     
+    with ∈-split α∈π₁
+  ...| d0 , _ , d1 with disj-dec _≟Atom_ (d1 ++ α ∷ πd) πi
+                      | disj-dec _≟Atom_ d0 πi
+                      | isMaximal? p
+  ...| yes l  | yes m  | yes n  = yes (l , m , n )
+  ...| yes l  | yes m  | no abs = no (abs ∘ proj₂ ∘ proj₂)
+  ...| yes l  | no abs | _      = no (abs ∘ proj₁ ∘ proj₂)
+  ...| no abs | _      | _      = no (abs ∘ proj₁)
+  isMaximal? (AX {π₁} {π₂} {α = α} d i x p) | πi | πd | no _  | yes α∈π₂
+     with ∈-split α∈π₂
+  ...| i0 , _ , i1 with disj-dec _≟Atom_ πd (i1 ++ α ∷ πi) 
+                      | disj-dec _≟Atom_ πd i0
+                      | isMaximal? p
+  ...| yes l  | yes m  | yes n  = yes (l , m , n )
+  ...| yes l  | yes m  | no abs = no (abs ∘ proj₂ ∘ proj₂)
+  ...| yes l  | no abs | _      = no (abs ∘ proj₁ ∘ proj₂)
+  ...| no abs | _      | _      = no (abs ∘ proj₁)
 
+{-
+    with disj-dec _≟Atom_ π₁ π₂ | isMaximal? p
+  ...| yes l  | yes m  = yes (l , m)
+  ...| yes l  | no abs = no (abs ∘ proj₂)
+  ...| no abs | _      = no (abs ∘ proj₁)
+-}
 -- ** Normal Form Alignments
 
 {-
