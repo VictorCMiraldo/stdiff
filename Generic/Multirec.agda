@@ -147,16 +147,62 @@ module Paths where
   fill .(here refl) hip (here rest)   = hip ∷ rest
   fill .(there _) hip   (there px ab) = px ∷ fill _ hip ab
 
-  -- A value of type (∂ φ i j) indicates a path inside
-  -- some values of type Fix φ i leading to a subtree of type Fix φ j.
+  -- A value of type (∂ φ i js) indicates a path inside
+  -- some values of type Fix φ i leading to n subtrees, where
+  -- n ≡ length js and the type of the k-th subtree is Fix φ (lookup k js) 
   --
-  data ∂ {n : ℕ}(φ : Fam n) : Fin n → Fin n → Set where
-    here : ∀{i} → ∂ φ i i
-    peel : ∀{i k j}{C : Constr' φ i} 
-         → (prf : I k ∈ typeOf' φ i C)
-         → AllBut (λ x → ⟦ x ⟧A (Fix φ)) prf  
-         → ∂ φ k j 
-         → ∂ φ i j 
+  data ∂ {n}(φ : Fam n) : Fin n → List (Fin n) → Set where
+    -- Hole is here; there is only one variable.
+    here : ∀{i} → ∂ φ i (i ∷ [])
+    -- Peeling one layer of recursion;
+    -- We need a proof that a selection of variables is
+    -- a subset of the type of the constructor
+    --
+    -- TODO: We are gonna roll with sub-sequences because I'm not willing
+    -- to handle swaps right now. Ideally, we are looking at sub-multisets
+    -- where order doesn't matter but number of occurences does!
+    peel : ∀{i ks}{C : Constr' φ i} 
+         → (prf : (List-map I ks) ⊆l (typeOf' φ i C))
+         → ⟦ Subseq-compl prf ⟧P (Fix φ)
+         → (paths : All (λ k → ∃ λ js → ∂ φ k js) ks)
+         → ∂ φ i (concat (All-drop proj₁ paths))
+
+
+  So : ∀{a}{A : Set a} → Dec A → Bool
+  So (yes _) = true
+  So (no  _) = false
+
+  select-paths : ∀{n}{φ : Fam n}{ks : List (Fin n)}
+               → (paths : All (λ k → ∃ λ js → ∂ φ k js) ks)
+               → All (λ x → ⟦ x ⟧A (Fix φ)) (List-map I ks)
+               → Maybe (All (Fix φ) (concat (All-drop proj₁ paths)))
+
+  select : ∀{n}{φ : Fam n}{i : Fin n}{ks : List (Fin n)}
+         → ∂ φ i ks → Fix φ i → Maybe (All (Fix φ) ks)
+  select here               tree 
+    = just (tree ∷ [])
+  select {n} {φ} (peel {C = C} prf solid paths) ⟨ tree ⟩
+    -- First we make sure the topmost constructor matches!
+    = match C tree >>= λ ps 
+    -- Then we split the underlying product into two parts:
+    --   part0 : those elements where the many-paths follows through
+    --   part1 : those elements where no holes are present within
+    → let ps₀ = All-subseq-proj  prf ps
+          ps₁ = All-subseq-compl prf ps
+       -- compare the 'solid' parts for equality
+       in if So (DecEq._≟P_ (Fix φ) _≟Fix_ solid ps₁) 
+          then select-paths paths ps₀ 
+          else nothing
+
+  select-paths []                 prod = just []
+  select-paths ((holes , w) ∷ ws) (px ∷ prod) 
+    with select w px 
+  ...| nothing = nothing
+  ...| just rs 
+    with select-paths ws prod
+  ...| nothing = nothing
+  ...| just rss = just (All-++ rs rss)
+{-
 
   select : ∀{n k}{φ : Fam n}{π : Prod n} 
          → I k ∈ π → ⟦ π ⟧P (Fix φ) → Fix φ k
@@ -172,6 +218,7 @@ module Paths where
   inject-∂ here el = el
   inject-∂ (peel {C = C} prf els rest) el 
     = ⟨ inj C (fill prf (inject-∂ rest el) els) ⟩
+-}
 
   -- I can envision defining an Alμ with ∂ above.
   --   data Alμ : Fin n → Set where

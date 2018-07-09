@@ -56,7 +56,7 @@ open import Data.Product
   public
 
 open import Data.Sum
-  renaming (map to Sum-map)
+  renaming (map to Sum-map; swap to Sum-swap)
   public
 
 open import Data.Maybe 
@@ -112,7 +112,7 @@ Maybe-unmap-def f-inj nothing ()
 Maybe-unmap-def f-inj (just y) hip = cong just (f-inj (just-inj hip)) 
 
 open import Data.Bool
-  using (Bool ; true ; false) 
+  using (Bool ; true ; false; if_then_else_) 
   renaming (_≟_ to _≟B_)
   public
 
@@ -138,13 +138,18 @@ open import Data.Nat.Properties.Simple
   public
 
 open import Data.List
-  using (List ; _∷_ ; [] ; length ; _++_)
+  using (List ; _∷_ ; [] ; length ; _++_; concat)
   renaming (map to List-map ; zip to List-zip)
   public
 
 open import Data.List.All
   using (All ; _∷_ ; []) 
   renaming (map to All-map)
+  public
+
+open import Data.List.All.Properties
+  using ()
+  renaming (++⁺ to All-++)
   public
 
 All-∷-inj 
@@ -164,7 +169,9 @@ Any-there-inj
   → px ≡ py
 Any-there-inj refl = refl
 
--- List disjointness
+-- List membership instantiated to Relation.Binary.PropositionalEquality.setoid;
+-- I don't want to keep passing arbitrary setoids around.
+--
 
 _∈_ : ∀{a}{A : Set a} → A → List A → Set a
 x ∈ l = Any (_≡_ x) l
@@ -184,6 +191,29 @@ x ∉ l = ¬ (x ∈ l)
 ∉-tail : ∀{a}{A : Set a}{x y : A}{l : List A}
        → x ∉ (y ∷ l) → x ∉ l
 ∉-tail hip abs = hip (there abs)
+
+-- Sublist relation
+--
+-- The usual (∀ {x} → x ∈ xs → x ∈ ys) does not work
+-- for us; this allows one to prove that {2,2} ⊆ {2}
+--
+--
+
+data Subseq {a}{A : Set a} : List A → List A → Set a where
+  Nil  :                             Subseq []       []
+  Drop : ∀{xs y ys} → Subseq xs ys → Subseq xs       (y ∷ ys)
+  Keep : ∀{xs y ys} → Subseq xs ys → Subseq (y ∷ xs) (y ∷ ys)
+
+_⊆l_ : ∀{a}{A : Set a} → List A → List A → Set a
+_⊆l_ = Subseq
+
+Subseq-compl : ∀{a}{A : Set a}{xs ys : List A}
+             → xs ⊆l ys → List A
+Subseq-compl Nil                = []
+Subseq-compl (Drop {y = y} prf) = y ∷ Subseq-compl prf
+Subseq-compl (Keep {y = y} prf) = Subseq-compl prf
+
+-- List disjointness
 
 data Disj {a}{A : Set a} : List A → List A → Set a where
   nil  : ∀{l}       → Disj l []
@@ -296,3 +326,29 @@ All-head (px ∷ _) = px
 All-tail : {A : Set}{P : A → Set}{x : A}{xs : List A}
          → All P (x ∷ xs) → All P xs
 All-tail (_ ∷ pxs) = pxs
+
+All-drop : ∀{a b}{A : Set a}{K : Set a}{P : A → Set b}{xs : List A}
+         → (∀{x} → P x → K) → All P xs → List K
+All-drop f []         = []
+All-drop f (px ∷ pxs) = f px ∷ All-drop f pxs
+
+All-subseq-proj : ∀{a b}{A : Set a}{P : A → Set b}{xs ys : List A}
+                → xs ⊆l ys → All P ys → All P xs
+All-subseq-proj Nil ys = []
+All-subseq-proj (Drop prf) (y ∷ ys) = All-subseq-proj prf ys
+All-subseq-proj (Keep prf) (y ∷ ys) = y ∷ All-subseq-proj prf ys
+
+All-subseq-compl : ∀{a b}{A : Set a}{P : A → Set b}{xs ys : List A}
+                 → (prf : xs ⊆l ys) → All P ys → All P (Subseq-compl prf)
+All-subseq-compl Nil ys = []
+All-subseq-compl (Drop prf) (y ∷ ys) = y ∷ All-subseq-compl prf ys
+All-subseq-compl (Keep prf) (y ∷ ys) = All-subseq-compl prf ys
+
+All-sequence : ∀{a b}{A : Set a}{P : A → Set b}{xs : List A}
+             → All (Maybe ∘ P) xs → Maybe (All P xs)
+All-sequence [] = just []
+All-sequence (nothing ∷ pxs) = nothing
+All-sequence (just px ∷ pxs)
+  with All-sequence pxs
+...| nothing = nothing
+...| just r  = just (px ∷ r)
