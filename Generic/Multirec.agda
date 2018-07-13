@@ -134,18 +134,109 @@ _≟Fix_ {φ = φ} ⟨ sx ⟩ ⟨ sy ⟩ with DecEq._≟S_ (Fix φ) _≟Fix_ sx 
 
 -- * Paths over a Mutually Recursive Value
 
+module Treefix {n : ℕ}(φ : Fam n) where
+
+  open DecEq (Fix φ) _≟Fix_
+
+  data Path : Atom n → Set where
+    End  : ∀{κ} → Path (K κ)
+    Hole : ∀{i} → Path (I i)
+    Fork : ∀{i} 
+         → (C : Constr' φ i)
+         -- Ideally, we want a subset of (typeOf' φ i C)
+         -- instead of 'All'; this would be harder to work with.
+         -- Hence, we add the 'End' constructor.
+         → All Path (typeOf' φ i C)
+         → Path (I i)
+
+  {-# TERMINATING #-}
+  pathType : ∀{α} → Path α → List (Fin n)
+  pathType End         = []
+  pathType (Hole {i})  = i ∷ []
+  pathType (Fork _ ps) = concat (All-fgt (All-map pathType ps))
+    
+  data TxNP : (p : Prod n) → All Path p → Set
+
+  data Tx : (i : Fin n) → Path (I i) → Set where
+    hole : ∀{i} → Tx i Hole
+    peel : ∀{i} → (C : Constr' φ i)
+                → {ps : All Path (typeOf' φ i C)}
+                → TxNP (typeOf' φ i C) ps
+                → Tx i (Fork C ps)
+
+  data TxNP where
+    nil   : TxNP [] []
+    solid : ∀{κ π ps} 
+          → ⟦ K κ ⟧A (Fix φ) → TxNP π ps → TxNP (K κ ∷ π) (End ∷ ps)
+    into  : ∀{n π p ps}
+          → Tx n p → TxNP π ps → TxNP (I n ∷ π) (p ∷ ps)
+
+  visitNP : {π : Prod n} → ⟦ π ⟧P (Fix φ) → (ps : All Path π) → Maybe (TxNP π ps)
+
+  visit : ∀{ν} → Fix φ ν → (p : Path (I ν)) → Maybe (Tx ν p)
+  visit ⟨ el ⟩ Hole        = just hole
+  visit ⟨ el ⟩ (Fork C ps) = match C el 
+                         >>= λ pr → visitNP pr ps
+                         >>= return ∘ peel C
+
+  visitNP [] [] = just nil
+  visitNP {K κ ∷ π} (a ∷ as) (End ∷ ps) 
+    = visitNP as ps >>= return ∘ solid a 
+  visitNP {I ν ∷ π} (a ∷ as) (p ∷ ps) 
+    = visit a p >>= λ tx → visitNP as ps >>= return ∘ into tx
+
+  TxNP-inj : {π : Prod n}{ps : All Path π}
+           → TxNP π ps
+           → All (Fix φ) (concat (All-fgt (All-map pathType ps)))
+           → ⟦ π ⟧P (Fix φ)
+
+  Tx-inj : ∀{ν}{p : Path (I ν)}
+         → Tx ν p
+         → All (Fix φ) (pathType p)  
+         → Fix φ ν
+  Tx-inj hole (el ∷ [])    = el
+  Tx-inj (peel C txnp) els = ⟨ inj C (TxNP-inj txnp els) ⟩
+  
+  TxNP-inj nil []       = []
+  TxNP-inj (solid a txnp) rs = a ∷ TxNP-inj txnp rs
+  TxNP-inj (into {p = p} tx txnp) rs 
+    = let (rs₀ , rs₁) = All-++-split (pathType p) rs
+       in Tx-inj tx rs₀ ∷ TxNP-inj txnp rs₁
+
+
+  TxNP-proj : {π : Prod n}{ps : All Path π}
+            → TxNP π ps
+            → ⟦ π ⟧P (Fix φ)
+            → Maybe (All (Fix φ) (concat (All-fgt (All-map pathType ps))))
+
+  Tx-proj : ∀{ν}{p : Path (I ν)}
+         → Tx ν p
+         → Fix φ ν
+         → Maybe (All (Fix φ) (pathType p))
+  Tx-proj hole el = just (el ∷ [])
+  Tx-proj (peel C txnp) ⟨ el ⟩
+    = match C el >>= TxNP-proj txnp 
+
+  TxNP-proj nil [] = just []
+  TxNP-proj (solid {κ} a txnp) (a' ∷ as) 
+    with _≟A_ {α = K κ} a a'
+  ...| no  _ = nothing
+  ...| yes _ = TxNP-proj txnp as
+  TxNP-proj (into tx txnp) (a  ∷ as) 
+    = Tx-proj tx a >>= λ res 
+    → TxNP-proj txnp as >>= λ res' 
+    → return (All-++ res res')
+
+{-
+  visit : ∀{i p} → (p' : Path) → Tx i p → Maybe (Tx i (p ⊕ p'))
+  visit Hole hole = hole
+  visit End  hole = hole
+  visit (Fork p) hole = hole
+  visit (Fork p) (peel C txnp) = peel C {!!}
+-}
+{-
+
 module Paths where
-
-  -- A value of (AllBut P prf), for (prf : x ∈ l) is
-  -- isomorphic to All P (delete prf l)
-  --
-  data AllBut {A : Set}(P : A → Set) : {l : List A}{x : A} → x ∈ l → Set where
-    here  : ∀{x xs}      → All P xs → AllBut P {x ∷ xs} (here refl)
-    there : ∀{x x' xs p} → (hip : P x) → AllBut P {xs} {x'} p → AllBut P {x ∷ xs} (there p)
-
-  fill : ∀{A l x}{P : A → Set} → (prf : x ∈ l) → P x → AllBut P prf → All P l
-  fill .(here refl) hip (here rest)   = hip ∷ rest
-  fill .(there _) hip   (there px ab) = px ∷ fill _ hip ab
 
   -- A value of type (∂ φ i js) indicates a path inside
   -- some values of type Fix φ i leading to n subtrees, where
@@ -214,6 +305,7 @@ module Paths where
   match-∂ (peel {C = C} prf _ rest) ⟨ el ⟩ 
     = match C el >>= match-∂ rest ∘ select prf
 
+
   inject-∂ : ∀{n i j}{φ : Fam n} → ∂ φ i j → Fix φ j → Fix φ i
   inject-∂ here el = el
   inject-∂ (peel {C = C} prf els rest) el 
@@ -223,3 +315,4 @@ module Paths where
   -- I can envision defining an Alμ with ∂ above.
   --   data Alμ : Fin n → Set where
   --     peel : (del : ∂ φ i j)(ins : ∂ φ j i) → Patch Alμ (⟦ j ⟧F φ) → Alμ i
+-}

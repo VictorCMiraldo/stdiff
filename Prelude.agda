@@ -149,7 +149,7 @@ open import Data.List.All
 
 open import Data.List.All.Properties
   using ()
-  renaming (++⁺ to All-++)
+  renaming (++⁺ to All-++; ++⁻ to All-++-split)
   public
 
 All-∷-inj 
@@ -326,6 +326,11 @@ All-head (px ∷ _) = px
 All-tail : {A : Set}{P : A → Set}{x : A}{xs : List A}
          → All P (x ∷ xs) → All P xs
 All-tail (_ ∷ pxs) = pxs
+
+All-fgt : ∀{a b}{A : Set a}{P : Set b}{xs : List A}
+        → All (const P) xs → List P
+All-fgt []       = []
+All-fgt (p ∷ ps) = p ∷ All-fgt ps
 
 All-drop : ∀{a b}{A : Set a}{K : Set a}{P : A → Set b}{xs : List A}
          → (∀{x} → P x → K) → All P xs → List K
