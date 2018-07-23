@@ -158,6 +158,33 @@ module Treefix {n : ℕ}(φ : Fam n) where
          → All Path (typeOf' φ i C)
          → Path (I i)
 
+  all-any-zipWithM
+    : {A : Set}{P Q : A → Set}{l : List A}
+    → (∀{a} → P a → Q a → Maybe (P a))
+    → All P l → Any Q l → Maybe (All P l)
+  all-any-zipWithM f [] ()
+  all-any-zipWithM f (p ∷ ps) (there qs)
+    with all-any-zipWithM f ps qs
+  ...| nothing  = nothing
+  ...| just res = just (p ∷ res)
+  all-any-zipWithM f (p ∷ qs) (here q)
+    with f p q
+  ...| nothing = nothing
+  ...| just res = just (res ∷ qs)
+
+  {-# TERMINATING #-}
+  _⊕_ : ∀{ν ι} → Path1 (I ν) (I ι) → Path (I ν) → Maybe (Path (I ν))
+  Hole     ⊕ Hole       = just Hole
+  Hole     ⊕ Fork C x   = just Hole
+  Fork C x ⊕ Hole       = just Hole
+  Fork C x ⊕ Fork C₁ x₁ 
+    with C ≟F C₁
+  ...| no  _    = nothing
+  ...| yes refl
+    with all-any-zipWithM (λ p q → q ⊕ p) {!x₁!} {!!}
+  ...| nothing = nothing
+  ...| just ps = just {!!} -- (Fork C ps)
+
   {-# TERMINATING #-}
   pathType : ∀{α} → Path α → List (Fin n)
   pathType End         = []

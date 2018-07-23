@@ -21,18 +21,18 @@ module Multirec.Patch {n : ℕ}(φ : Fam n) where
   -- and destination element, we can generate a patch.
   module Compute 
     {ν : Fin n}
-    (hmap : ∀{ι} → Fix φ ι → Maybe ( List (Path (I ν))
-                                   × List (Path (I ν))))
+    (hmap : ∀{ι} → Fix φ ι → Maybe ( List (Path1 (I ν) (I ι))
+                                   × List (Path1 (I ν) (I ι))))
       where
 
     {-# TERMINATING #-}
-    extractD : ∀{ι} → Fix φ ι → List (Path (I ν))
+    extractD : ∀{ι} → Fix φ ι → Maybe (Path (I ν))
     extractD {ι} ⟨ el ⟩ with hmap {ι} ⟨ el ⟩
-    ...| just (l , _) = l
+    ...| just (l , _) = {!!}
     ...| nothing with sop el
     ...| tag C p      
-       = concat (All-fgt (All-map (λ {α} → extractDₐ {α}) p))
+       = {!!} (All-fgt (All-map (λ {α} → extractDₐ {α}) p))
       where
-        extractDₐ : ∀{α} → ⟦ α ⟧A (Fix φ) → List (Path (I ν))
+        extractDₐ : ∀{α} → ⟦ α ⟧A (Fix φ) → List (Path1 (I ν) α)
         extractDₐ {K _} x = []
-        extractDₐ {I ι} x = extractD x
+        extractDₐ {I ι} x = {!!} -- extractD x
