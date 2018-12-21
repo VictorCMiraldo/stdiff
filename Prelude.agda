@@ -56,7 +56,7 @@ open import Data.Product
   public
 
 open import Data.Sum
-  renaming (map to Sum-map)
+  renaming (map to Sum-map; swap to Sum-swap)
   public
 
 open import Data.Maybe 
